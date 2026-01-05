@@ -1,60 +1,205 @@
-# Nuxt Starter Template
+# VIES VAT Validator
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+A modern web application for validating European VAT numbers using the official EU VIES (VAT Information Exchange System) service.
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+## Overview
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+VIES VAT Validator is a Nuxt application that provides a user-friendly interface for checking the validity of VAT numbers across the European Union. It integrates with the official European Commission VIES service via SOAP API to verify VAT numbers in real-time.
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-  </picture>
-</a>
+## Features
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+- **VAT Number Validation**: Verify VAT numbers across all EU member states
+- **Country Selection**: Easy country picker with support for all EU countries
+- **Dual Validation Modes**:
+  - Standard validation: Check VAT number validity
+  - Approximate matching: Check VAT with requester information for more detailed results
+- **Business Information**: Retrieve company name and address when available
+- **Caching**: Built-in 24-hour cache to reduce API calls and improve performance
+- **Cache Management**: Clear cached entries or all cache at once
+- **Dark Mode**: Full dark mode support via Nuxt UI
+- **Responsive Design**: Mobile-friendly interface with Tailwind CSS
+- **Type Safety**: Full TypeScript support with strict mode enabled
+- **Error Handling**: Comprehensive error handling and user feedback
 
-## Quick Start
+## Tech Stack
 
-```bash [Terminal]
-npm create nuxt@latest -- -t github:nuxt-ui-templates/starter
+- **Framework**: [Nuxt](https://nuxt.com) - Vue 3 meta-framework
+- **UI Components**: [Nuxt UI](https://ui.nuxt.com) - Fully styled and customizable components
+- **Styling**: [Tailwind CSS](https://tailwindcss.com) - Utility-first CSS framework
+- **SOAP Client**: [node-soap](https://github.com/vpulim/node-soap) - SOAP client for Node.js
+- **Icons**: [Iconify](https://iconify.design) - Icon library with Lucide and Simple Icons
+- **Language**: TypeScript with strict mode
+- **Package Manager**: pnpm
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- pnpm 10.26+
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/roiLeo/vies-vat-validator.git
+cd vies-vat-validator
 ```
 
-## Deploy your own
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
-
-## Setup
-
-Make sure to install the dependencies:
-
+2. Install dependencies:
 ```bash
 pnpm install
 ```
 
-## Development Server
+### Development
 
-Start the development server on `http://localhost:3000`:
-
+Start the development server:
 ```bash
 pnpm dev
 ```
 
-## Production
+The application will be available at `http://localhost:3000`
+
+### Building
 
 Build the application for production:
-
 ```bash
 pnpm build
 ```
 
-Locally preview production build:
-
+Preview the built application:
 ```bash
 pnpm preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## API Endpoints
+
+### Check VAT Number
+**POST** `/api/vat/check`
+
+Validates a VAT number using the VIES service.
+
+Request body:
+```json
+{
+  "countryCode": "FR",
+  "vatNumber": "40303265045",
+  "useCache": true
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "valid": true,
+    "countryCode": "FR",
+    "vatNumber": "40303265045",
+    "requestDate": "2025-01-05",
+    "name": "Company Name",
+    "address": "Company Address"
+  }
+}
+```
+
+### Check VAT with Requester Info
+**POST** `/api/vat/check-approx`
+
+Validates a VAT number with additional requester information for more detailed results.
+
+Request body:
+```json
+{
+  "countryCode": "FR",
+  "vatNumber": "40303265045",
+  "requesterCountryCode": "DE",
+  "requesterVatNumber": "12345678901",
+  "useCache": true
+}
+```
+
+### Clear Cache for VAT Number
+**DELETE** `/api/vat/cache`
+
+Clears the cached entry for a specific VAT number.
+
+Request body:
+```json
+{
+  "countryCode": "FR",
+  "vatNumber": "40303265045"
+}
+```
+
+### Clear All Cache
+**DELETE** `/api/vat/cache/clear-all`
+
+Clears all cached VAT validation entries.
+
+## Configuration
+
+The application uses Nuxt's runtime config for VIES service configuration:
+
+```typescript
+runtimeConfig: {
+  viesWsdlUrl: 'https://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl',
+  public: {
+    apiBase: '/api'
+  }
+}
+```
+
+## Caching
+
+The application implements a built-in caching mechanism with the following features:
+
+- **Default TTL**: 24 hours (86400000 milliseconds)
+- **Scope**: Only valid VAT numbers are cached
+- **Strategy**: In-memory cache with TTL expiration
+- **Management**: Individual cache entries can be cleared, or all cache can be cleared at once
+
+This reduces unnecessary calls to the VIES service and improves application performance.
+
+## VIES Service Integration
+
+The application integrates with the official EU VIES (VAT Information Exchange System) service operated by the European Commission. The VIES service provides:
+
+- Real-time VAT number validation across EU member states
+- Company name and address information when available
+- Request date tracking
+
+For more information about VIES, visit: https://ec.europa.eu/taxation_customs/vies/
+
+## Quality Assurance
+
+- **Type Checking**: Full TypeScript strict mode
+- **Linting**: ESLint with Nuxt configuration
+- **Code Style**: Consistent formatting with stylistic rules
+
+Run checks:
+```bash
+pnpm lint          # Run ESLint
+pnpm typecheck     # Run TypeScript checking
+```
+
+## Browser Support
+
+- Modern browsers (Chrome, Firefox, Safari, Edge)
+- Responsive design works on mobile, tablet, and desktop devices
+
+## License
+
+Please refer to the [LICENSE](LICENSE) file for licensing information.
+
+## Contributing
+
+Contributions are welcome! Feel free to open issues and submit pull requests.
+
+## Author
+
+[roiLeo](https://github.com/roiLeo)
+
+---
+
+**Note**: This application is not an official EU service. It provides a user-friendly interface to interact with the official VIES service. Always verify critical VAT information through official channels.

@@ -12,10 +12,10 @@
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.82",
-    "@iconify-json/simple-icons": "^1.2.63",
+    "@iconify-json/simple-icons": "^1.2.65",
     "@nuxt/ui": "^4.3.0",
     "nuxt": "^4.2.2",
-    "soap": "^1.6.1"
+    "soap": "^1.6.2"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.12.1",
