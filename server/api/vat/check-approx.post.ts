@@ -54,16 +54,17 @@ export default defineEventHandler(async (event) => {
       success: !result.error,
       data: result
     }
-  } catch (error: any) {
-    if (error.statusCode) {
+  } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'statusCode' in error) {
       throw error
     }
 
+    const errorMessage = error instanceof Error ? error.message : 'An error occurred while checking VAT'
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal Server Error',
       data: {
-        message: error.message || 'An error occurred while checking VAT'
+        message: errorMessage
       }
     })
   }

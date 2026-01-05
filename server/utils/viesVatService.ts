@@ -35,8 +35,9 @@ class ViesVatService {
         this.client = await createClientAsync(this.wsdlUrl, {
           endpoint: 'https://ec.europa.eu/taxation_customs/vies/services/checkVatService'
         })
-      } catch (error: any) {
-        console.error('VIES SOAP Client initialization failed:', error.message)
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.error('VIES SOAP Client initialization failed:', errorMessage)
         throw new Error('Failed to initialize VIES service')
       }
     }
@@ -86,11 +87,12 @@ class ViesVatService {
       }
 
       return response
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       console.error('VIES VAT check failed:', {
         countryCode,
         vatNumber,
-        error: error.message
+        error: errorMessage
       })
 
       return {
@@ -99,7 +101,7 @@ class ViesVatService {
         vatNumber,
         requestDate: new Date().toISOString() as string,
         error: this.parseSoapError(error),
-        errorCode: error.root?.Envelope?.Body?.Fault?.faultcode || 'UNKNOWN'
+        errorCode: this.getSoapFaultCode(error) || 'UNKNOWN'
       }
     }
   }
@@ -154,11 +156,12 @@ class ViesVatService {
       }
 
       return response
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       console.error('VIES VAT approx check failed:', {
         countryCode,
         vatNumber,
-        error: error.message
+        error: errorMessage
       })
 
       return {
@@ -167,17 +170,47 @@ class ViesVatService {
         vatNumber,
         requestDate: new Date().toISOString() as string,
         error: this.parseSoapError(error),
-        errorCode: error.root?.Envelope?.Body?.Fault?.faultcode || 'UNKNOWN'
+        errorCode: this.getSoapFaultCode(error) || 'UNKNOWN'
       }
     }
   }
 
   /**
+   * Get SOAP fault code from error
+   */
+  private getSoapFaultCode(error: unknown): string | undefined {
+    if (typeof error === 'object' && error !== null && 'root' in error) {
+      const root = error.root as Record<string, unknown>
+      const envelope = root?.Envelope as Record<string, unknown>
+      const body = envelope?.Body as Record<string, unknown>
+      const fault = body?.Fault as Record<string, unknown>
+      return fault?.faultcode as string | undefined
+    }
+    return undefined
+  }
+
+  /**
    * Parse SOAP error messages
    */
-  private parseSoapError(error: any): string {
-    const faultCode = error.root?.Envelope?.Body?.Fault?.faultcode || ''
-    const faultString = error.root?.Envelope?.Body?.Fault?.faultstring || error.message
+  private parseSoapError(error: unknown): string {
+    let faultCode = ''
+    let faultString = ''
+
+    if (typeof error === 'object' && error !== null) {
+      if ('root' in error) {
+        const root = error.root as Record<string, unknown>
+        const envelope = root?.Envelope as Record<string, unknown>
+        const body = envelope?.Body as Record<string, unknown>
+        const fault = body?.Fault as Record<string, unknown>
+        faultCode = (fault?.faultcode as string) || ''
+        faultString = (fault?.faultstring as string) || ''
+      }
+      if ('message' in error) {
+        faultString = faultString || (error.message as string)
+      }
+    } else if (error instanceof Error) {
+      faultString = error.message
+    }
 
     const errorMessages: Record<string, string> = {
       INVALID_INPUT: 'Invalid country code or VAT number format',

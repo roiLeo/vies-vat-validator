@@ -21,16 +21,17 @@ export default defineEventHandler(async (event) => {
       success: true,
       message: cleared ? 'Cache cleared successfully' : 'No cache found'
     }
-  } catch (error: any) {
-    if (error.statusCode) {
+  } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'statusCode' in error) {
       throw error
     }
 
+    const errorMessage = error instanceof Error ? error.message : 'An error occurred while clearing cache'
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal Server Error',
       data: {
-        message: error.message || 'An error occurred while clearing cache'
+        message: errorMessage
       }
     })
   }

@@ -50,8 +50,15 @@ export const useVatValidation = () => {
       }
 
       return response.data
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'An error occurred'
+    } catch (err: unknown) {
+      let errorMessage = 'An error occurred'
+      if (err instanceof Error) {
+        errorMessage = err.message
+      } else if (typeof err === 'object' && err !== null && 'data' in err) {
+        const data = (err as Record<string, unknown>).data as Record<string, unknown> | undefined
+        errorMessage = (data?.message as string) || 'An error occurred'
+      }
+      error.value = errorMessage
       return null
     } finally {
       loading.value = false
@@ -79,8 +86,15 @@ export const useVatValidation = () => {
       }
 
       return response.data
-    } catch (err: any) {
-      error.value = err.data?.message || err.message || 'An error occurred'
+    } catch (err: unknown) {
+      let errorMessage = 'An error occurred'
+      if (err instanceof Error) {
+        errorMessage = err.message
+      } else if (typeof err === 'object' && err !== null && 'data' in err) {
+        const data = (err as Record<string, unknown>).data as Record<string, unknown> | undefined
+        errorMessage = (data?.message as string) || 'An error occurred'
+      }
+      error.value = errorMessage
       return null
     } finally {
       loading.value = false
@@ -101,8 +115,8 @@ export const useVatValidation = () => {
       })
 
       return response.success
-    } catch (err: any) {
-      console.error('Failed to clear cache:', err)
+    } catch (err: unknown) {
+      console.error('Failed to clear cache:', err instanceof Error ? err.message : 'Unknown error')
       return false
     }
   }
@@ -117,8 +131,8 @@ export const useVatValidation = () => {
       })
 
       return response.success
-    } catch (err: any) {
-      console.error('Failed to clear all cache:', err)
+    } catch (err: unknown) {
+      console.error('Failed to clear all cache:', err instanceof Error ? err.message : 'Unknown error')
       return false
     }
   }
